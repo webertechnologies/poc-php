@@ -29,9 +29,19 @@ jobs:
         # Add the instance to known_hosts to prevent host key verification issues
         ssh-keyscan -H 34.29.54.77 >> ~/.ssh/known_hosts
 
+        # Define the deployment script file path
+        DEPLOY_SCRIPT="script.sh"
+        INSTANCE_IP="34.29.54.77"
+
+        # Ensure the deployment script exists
+        if [ ! -f "$DEPLOY_SCRIPT" ]; then
+          echo "Deployment script $DEPLOY_SCRIPT not found!"
+          exit 1
+        fi
+
         # Connect to the instance and execute the script
-        scp -o StrictHostKeyChecking=no -i private_key $DEPLOY_SCRIPT "$SSH_USER@34.29.54.77:~/"
-        ssh -o StrictHostKeyChecking=no -i private_key "$SSH_USER@34.29.54.77" "bash ~/Script.sh"
+        scp -o StrictHostKeyChecking=no -i private_key "$DEPLOY_SCRIPT" "$SSH_USER@$INSTANCE_IP:~/"
+        ssh -o StrictHostKeyChecking=no -i private_key "$SSH_USER@$INSTANCE_IP" "bash ~/script.sh"
 
     - name: Cleanup
       if: always()
