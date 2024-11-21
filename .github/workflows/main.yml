@@ -12,32 +12,29 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Deploy to Compute Engine Instance
+      env:
+        SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+        PASSPHRASE: ${{ secrets.GCP_SSH_KEY_PASSPHRASE }}
       run: |
-        # Define variables
-        INSTANCE_NAME="poc-php"
-        ZONE="us-central1-b"  # Replace with your instance's zone
-        SSH_USER="kiranpranay12"  # Replace with the user for the instance
-        SSH_KEY="${{ secrets.GCP_SSH_PRIVATE_KEY }}"  # Add private SSH key to secrets
-        DEPLOY_SCRIPT="Script.sh"  # Script to run on the instance
-
         # Write SSH key to a file
         echo "$SSH_KEY" > private_key
         chmod 600 private_key
-        
 
-        # Generate public key
-        ssh-keygen -y -f private_key > private_key.pub
+        # Start ssh-agent and add the private key with the passphrase
+        eval "$(ssh-agent -s)"
+        echo "$PASSPHRASE" | ssh-add private_key
 
         mkdir -p ~/.ssh
 
         # Add the instance to known_hosts to prevent host key verification issues
         ssh-keyscan -H 34.29.54.77 >> ~/.ssh/known_hosts
 
-        # Add the instance to known_hosts to prevent host key verification issues
-        ssh-keyscan -H 34.29.54.77 >> ~/.ssh/known_hosts
-
         # Connect to the instance and execute the script
-        scp -i private_key $DEPLOY_SCRIPT "$SSH_USER@34.29.54.77:~/"
-        ssh -i private_key "$SSH_USER@34.29.54.77" "bash ~/Script.sh"
+        scp -o StrictHostKeyChecking=no -i private_key $DEPLOY_SCRIPT "$SSH_USER@34.29.54.77:~/"
+        ssh -o StrictHostKeyChecking=no -i private_key "$SSH_USER@34.29.54.77" "bash ~/Script.sh"
 
-    
+    - name: Cleanup
+      if: always()
+      run: |
+        # Remove the private key
+        rm -f private_key
