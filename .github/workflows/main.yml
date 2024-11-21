@@ -11,10 +11,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Deploy to Compute Engine Instance
+    - name: Deploy to Google Compute Engine Instance
       env:
-        SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-        PASSPHRASE: bannu
+        INSTANCE_NAME: "poc-php"  # The name of your instance in Google Cloud
+        INSTANCE_IP: "34.29.54.77"  # The public IP address of your Google Cloud instance
+        SSH_USER: "kiranpranay12"  # The SSH user for your Google Cloud instance
+        SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}  # Your private SSH key stored in GitHub Secrets
+        DEPLOY_SCRIPT: "Script.sh"  # The script to run on the instance
       run: |
         # Write SSH key to a file
         echo "$SSH_KEY" > private_key
@@ -22,16 +25,11 @@ jobs:
 
         # Start ssh-agent and add the private key with the passphrase
         eval "$(ssh-agent -s)"
-        echo "$PASSPHRASE" | ssh-add private_key
+        echo "bannu" | ssh-add private_key
 
+        # Add the instance IP to known_hosts to prevent interactive prompts
         mkdir -p ~/.ssh
-
-        # Add the instance to known_hosts to prevent host key verification issues
-        ssh-keyscan -H 34.29.54.77 >> ~/.ssh/known_hosts
-
-        # Define the deployment script file path
-        DEPLOY_SCRIPT="script.sh"
-        INSTANCE_IP="34.29.54.77"
+        ssh-keyscan -H "$INSTANCE_IP" >> ~/.ssh/known_hosts
 
         # Ensure the deployment script exists
         if [ ! -f "$DEPLOY_SCRIPT" ]; then
@@ -39,12 +37,14 @@ jobs:
           exit 1
         fi
 
-        # Connect to the instance and execute the script
+        # Copy the script to the instance
         scp -o StrictHostKeyChecking=no -i private_key "$DEPLOY_SCRIPT" "$SSH_USER@$INSTANCE_IP:~/"
-        ssh -o StrictHostKeyChecking=no -i private_key "$SSH_USER@$INSTANCE_IP" "bash ~/script.sh"
+
+        # Connect to the instance and execute the script
+        ssh -o StrictHostKeyChecking=no -i private_key "$SSH_USER@$INSTANCE_IP" "bash ~/Script.sh"
 
     - name: Cleanup
       if: always()
       run: |
-        # Remove the private key
+        # Remove the private key after use to keep it secure
         rm -f private_key
