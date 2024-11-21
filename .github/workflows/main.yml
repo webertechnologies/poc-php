@@ -14,7 +14,7 @@ jobs:
     - name: Deploy to Compute Engine Instance
       env:
         SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-        PASSPHRASE: ${{ secrets.GCP_SSH_KEY_PASSPHRASE }}
+        PASSPHRASE: bannu
       run: |
         # Write SSH key to a file
         echo "$SSH_KEY" > private_key
