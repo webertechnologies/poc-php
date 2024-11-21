@@ -17,7 +17,7 @@ jobs:
         INSTANCE_IP: "34.29.54.77"  # The public IP address of your Google Cloud instance
         SSH_USER: "kiranpranay12"  # The SSH user for your Google Cloud instance
         SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}  # Your private SSH key stored in GitHub Secrets
-        DEPLOY_SCRIPT: "Script.sh"  # The script to run on the instance
+        DEPLOY_SCRIPT: "script.sh"  # The script to run on the instance
       run: |
         # Write SSH key to a file
         echo "$SSH_KEY" > private_key
@@ -41,7 +41,7 @@ jobs:
         scp -o StrictHostKeyChecking=no -i private_key "$DEPLOY_SCRIPT" "$SSH_USER@$INSTANCE_IP:~/"
 
         # Connect to the instance and execute the script
-        ssh -o StrictHostKeyChecking=no -i private_key "$SSH_USER@$INSTANCE_IP" "bash ~/Script.sh"
+        ssh -o StrictHostKeyChecking=no -i private_key "$SSH_USER@$INSTANCE_IP" "bash ~/script.sh"
 
     - name: Cleanup
       if: always()
